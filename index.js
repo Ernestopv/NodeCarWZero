@@ -5,17 +5,13 @@ const bodyParser = require("body-parser");
 const { exec } = require("child_process");
 var cors = require("cors");
 var rpio = require("rpio");
+const L298N = require("./node_modules/rpio-l298n/l298n.js");
 const { reset } = require("nodemon");
 const app = express();
 
-rpio.open(24, rpio.OUTPUT, rpio.LOW);
-rpio.open(26, rpio.OUTPUT, rpio.LOW);
-rpio.open(19, rpio.OUTPUT, rpio.LOW);
-rpio.open(21, rpio.OUTPUT, rpio.LOW);
-rpio.open(11, rpio.OUTPUT, rpio.LOW);
-rpio.open(37, rpio.OUTPUT, rpio.LOW);
-rpio.open(35, rpio.OUTPUT, rpio.LOW);
-rpio.open(33, rpio.OUTPUT, rpio.LOW);
+let l298n = new L298N(12, 18, 16, 33, 35, 37);
+l298n.setSpeed(l298n.NO1, 10);
+l298n.setSpeed(l298n.NO2, 10);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -49,42 +45,35 @@ app.post("/motor/direction", (req, res) => {
 });
 
 function Go() {
-  rpio.write(21, rpio.LOW);
-  rpio.write(26, rpio.LOW);
-  rpio.write(19, rpio.HIGH);
-  rpio.write(24, rpio.HIGH);
+  l298n.forward(l298n.NO1);
+  l298n.forward(l298n.NO2);
 }
 
 function Back() {
-  rpio.write(21, rpio.HIGH);
-  rpio.write(26, rpio.HIGH);
-  rpio.write(19, rpio.LOW);
-  rpio.write(24, rpio.LOW);
+  l298n.backward(l298n.NO1);
+  l298n.backward(l298n.NO2);
 }
 function Left() {
-  rpio.write(21, rpio.LOW);
-  rpio.write(26, rpio.LOW);
-  rpio.write(19, rpio.LOW);
-  rpio.write(24, rpio.HIGH);
+  l298n.forward(l298n.NO1);
+  l298n.stop(l298n.NO2);
 }
 function Right() {
-  rpio.write(21, rpio.LOW);
-  rpio.write(26, rpio.LOW);
-  rpio.write(19, rpio.HIGH);
-  rpio.write(24, rpio.LOW);
+  l298n.stop(l298n.NO1);
+  l298n.forward(l298n.NO2);
 }
+
 function LightsOn() {
-  rpio.write(11, rpio.HIGH);
-  rpio.write(37, rpio.HIGH);
-  rpio.write(35, rpio.HIGH);
-  rpio.write(33, rpio.HIGH);
+  // rpio.write(11, rpio.HIGH);
+  // rpio.write(37, rpio.HIGH);
+  // rpio.write(35, rpio.HIGH);
+  // rpio.write(33, rpio.HIGH);
 }
 
 function LightsOff() {
-  rpio.write(11, rpio.LOW);
-  rpio.write(37, rpio.LOW);
-  rpio.write(35, rpio.LOW);
-  rpio.write(33, rpio.LOW);
+  // rpio.write(11, rpio.LOW);
+  // rpio.write(37, rpio.LOW);
+  // rpio.write(35, rpio.LOW);
+  // rpio.write(33, rpio.LOW);
 }
 
 app.get("/", (req, res) => {
@@ -107,7 +96,6 @@ app.get("/getIP", (req, res) => {
       }
     }
   }
-
   res.send(results["wlan0"][0]);
   res.end();
 });
@@ -125,7 +113,7 @@ app.post("/light", (req, res) => {
 });
 
 app.post("/camera/on", (req, res) => {
-  exec("motion");
+  exec("sh Starh");
 
   res.status(200);
   res.send("camera On");
@@ -133,7 +121,7 @@ app.post("/camera/on", (req, res) => {
 });
 
 app.post("/camera/off", (req, res) => {
-  exec("killall motion");
+  exec("killall mjpg_streamer");
 
   res.status(200);
   res.send("camera Off");
@@ -142,10 +130,8 @@ app.post("/camera/off", (req, res) => {
 
 app.post("/motor/off", (req, res) => {
   if (req.body.response === "stop") {
-    rpio.write(24, rpio.LOW);
-    rpio.write(26, rpio.LOW);
-    rpio.write(19, rpio.LOW);
-    rpio.write(21, rpio.LOW);
+    l298n.stop(l298n.NO1);
+    l298n.stop(l298n.NO2);
     res.send("off");
   } else {
     res.send("not available");
