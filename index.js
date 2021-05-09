@@ -5,13 +5,14 @@ const bodyParser = require("body-parser");
 const { exec } = require("child_process");
 var cors = require("cors");
 var rpio = require("rpio");
-const L298N = require("./node_modules/rpio-l298n/l298n.js");
+const L298N = require("./l298n/l298n.js");
 const { reset } = require("nodemon");
 const app = express();
 
 let l298n = new L298N(12, 18, 16, 33, 35, 37);
 l298n.setSpeed(l298n.NO1, 10);
 l298n.setSpeed(l298n.NO2, 10);
+rpio.open(7, rpio.OUTPUT, rpio.LOW);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -63,17 +64,11 @@ function Right() {
 }
 
 function LightsOn() {
-  // rpio.write(11, rpio.HIGH);
-  // rpio.write(37, rpio.HIGH);
-  // rpio.write(35, rpio.HIGH);
-  // rpio.write(33, rpio.HIGH);
+  rpio.write(7, rpio.HIGH);
 }
 
 function LightsOff() {
-  // rpio.write(11, rpio.LOW);
-  // rpio.write(37, rpio.LOW);
-  // rpio.write(35, rpio.LOW);
-  // rpio.write(33, rpio.LOW);
+  rpio.write(7, rpio.LOW);
 }
 
 app.get("/", (req, res) => {
@@ -138,4 +133,4 @@ app.post("/motor/off", (req, res) => {
   }
 });
 
-app.listen(3001, () => console.log("Listenint on Port 3001"));
+app.listen(80, () => console.log("Listenint on Port 80"));
