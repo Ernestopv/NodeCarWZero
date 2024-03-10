@@ -1,4 +1,5 @@
 const express = require("express");
+const session = require("express-session");
 const { networkInterfaces } = require("os");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -19,26 +20,38 @@ app.use(cors());
 
 app.use(express.static(path.join(__dirname, "../NodeCarWZero/build")));
 
+app.use(
+  session({
+    secret: "yourSecretKey",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
 app.post("/motor/direction", (req, res) => {
   let result = "";
-  if (req.body.direction === "FORWARD") {
-    Go();
-    result = "go";
-  }
-  if (req.body.direction === "BACKWARD") {
-    Back();
-    result = "back";
-  }
-  if (req.body.direction === "RIGHT") {
-    Right();
-    result = "right";
-  }
-  if (req.body.direction === "LEFT") {
-    Left();
-    result = "left";
-  }
 
-  console.log(req.body);
+  if (req.session.direction !== req.body.direction) {
+    req.session.direction = req.body.direction;
+    if (req.body.direction === "FORWARD") {
+      Go();
+      result = "go";
+    }
+    if (req.body.direction === "BACKWARD") {
+      Back();
+      result = "back";
+    }
+    if (req.body.direction === "RIGHT") {
+      Right();
+      result = "right";
+    }
+    if (req.body.direction === "LEFT") {
+      Left();
+      result = "left";
+    }
+  }
+  result = req.session.direction;
+  console.log(req.session.direction);
   res.status(200);
   res.send(result);
   res.end();
